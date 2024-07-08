@@ -18,7 +18,7 @@ model User {
   city String?
   school String?
   work String?
-  createdAt DateTime @default(now())
+  createdAt DateTime? @default(now())
   posts Post[]
   comments Comment[]
   likes Like[]

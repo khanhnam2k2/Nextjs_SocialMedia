@@ -1,18 +1,36 @@
+import prisma from "@/lib/client";
+import { auth } from "@clerk/nextjs/server";
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 
-const ProfileCard = () => {
+const ProfileCard = async () => {
+  const { userId } = auth();
+  if (!userId) return;
+  const user = await prisma.user.findFirst({
+    where: {
+      id: userId,
+    },
+    include: {
+      _count: {
+        select: {
+          follower: true,
+        },
+      },
+    },
+  });
+  if (!user) return null;
   return (
     <div className="p-4 bg-white rounded-lg shadow-md text-sm text-gray-500 flex flex-col gap-6">
       <div className="h-20 relative">
         <Image
-          src="https://images.unsplash.com/photo-1720170494683-48428a09122b?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+          src={user.cover || "/noAvatar.png"}
           fill
           alt=""
           className="rounded-md object-cover"
         />
         <Image
-          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8ZmFjZXxlbnwwfHwwfHx8MA%3D%3D"
+          src={user.avatar || "/noAvatar.png"}
           width={48}
           height={48}
           alt=""
@@ -20,7 +38,11 @@ const ProfileCard = () => {
         />
       </div>
       <div className="h-20 flex flex-col gap-2 items-center">
-        <span className="font-semibold">Nam</span>
+        <span className="font-semibold">
+          {user.name && user.surname
+            ? user.surname + " " + user.name
+            : user.username}
+        </span>
         <div className="flex items-center gap-4">
           <div className="flex">
             <Image
@@ -46,12 +68,15 @@ const ProfileCard = () => {
             />
           </div>
           <span className="font-semibold text-xs text-gray-500">
-            500 Follower
+            {user._count.follower} Follower
           </span>
         </div>
-        <button className="bg-blue-500 text-white p-2 text-xs rounded-lg">
+        <Link
+          href={`/profile/${user.username}`}
+          className="bg-blue-500 text-white p-2 text-xs rounded-lg"
+        >
           My Profile
-        </button>
+        </Link>
       </div>
     </div>
   );
